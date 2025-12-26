@@ -30,7 +30,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
     if (existingSubscription) {
         // Unsubscribe
-        await existingSubscription.remove()
+        await existingSubscription.deleteOne()
         res.status(200).json(new ApiResponse(true, 'Unsubscribed successfully'))
     } else {
         // Subscribe

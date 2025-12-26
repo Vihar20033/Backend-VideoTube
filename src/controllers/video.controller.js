@@ -1,4 +1,5 @@
-import mongoose, { isValidObjectId } from "mongoose"
+import mongoose, { isValidObjectId } from "mongoose" // Check if string is valid ObjectId MongoDB
+
 import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
 import { ApiError } from "../utils/ApiError.js"
@@ -6,12 +7,15 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js"
 
+
+// Fetch and filter published videos with pagination , sorting and search
 const getAllVideos = asyncHandler(async (req, res) => {
 
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     const filter = { isPublished: true }
 
     if (query) {
+        // Find Video where title or description matches the query (case-insensitive)
         filter.$or = [
             { title: { $regex: query, $options: "i" } },
             { description: { $regex: query, $options: "i" } }
@@ -19,6 +23,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 
     if (userId) {
+        // Validate userId and filter by owner (Show videos of a specific user)
         if (!isValidObjectId(userId)) throw new ApiError(400, "Invalid userId")
         const user = await User.findById(userId)
         if (!user) throw new ApiError(404, "User not found")
@@ -26,14 +31,17 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 
     const sortOptions = {}
-    if (sortBy) sortOptions[sortBy] = sortType === "desc" ? -1 : 1
-    else sortOptions.createdAt = -1
+    if (sortBy) sortOptions[sortBy] = sortType === "desc" ? -1 : 1 
+    else sortOptions.createdAt = -1  // Default sort by newest first
+
+    // For eg. sorted by views: /videos?sortBy=views&sortType=desc   sortOptions = { views: -1 }
+
 
     const videos = await Video.find(filter)
-        .sort(sortOptions)
-        .skip((page - 1) * limit)
-        .limit(parseInt(limit))
-        .populate("owner", "name email")
+        .sort(sortOptions)                  // Apply sorting either by views, createdAt etc.
+        .skip((page - 1) * limit)           // Pagination: Skip (page-1)*limit documents
+        .limit(parseInt(limit))             // Limit to 'limit' documents
+        .populate("owner", "name email")   // Populate owner field with name and email
 
     const total = await Video.countDocuments(filter)
 
@@ -141,17 +149,19 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found")
     }
 
+    // Extract public_id and delete from Cloudinary
     if (video.videoFile) {
-        await deleteFromCloudinary(video.videoFile, "video")
+        const videoPublicId = video.videoFile.split("/").pop().split(".")[0]
+        await deleteFromCloudinary(videoPublicId, "video")
     }
 
     if (video.thumbnail) {
-        await deleteFromCloudinary(video.thumbnail, "image")
+        const thumbPublicId = video.thumbnail.split("/").pop().split(".")[0]
+        await deleteFromCloudinary(thumbPublicId, "image")
     }
 
-    await video.remove()
+    await video.deleteOne()
     res.status(200).json(new ApiResponse(true, "Video deleted", null))
-
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {

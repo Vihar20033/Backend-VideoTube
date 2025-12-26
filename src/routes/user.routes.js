@@ -1,3 +1,5 @@
+/* This JavaScript code is setting up a router using Express.js for handling various user-related
+routes in a web application. Here's a breakdown of what the code is doing: */
 import { Router } from "express";
 import { 
     loginUser, 
@@ -14,7 +16,6 @@ import {
 } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-
 
 const router = Router()
 

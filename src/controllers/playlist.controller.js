@@ -4,8 +4,8 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 
-// ✅ Create a new playlist
 const createPlaylist = asyncHandler(async (req, res) => {
+
     const { name, description } = req.body
 
     if (!name) {
@@ -26,7 +26,6 @@ const createPlaylist = asyncHandler(async (req, res) => {
         .json(new ApiResponse(true, "Playlist created successfully", newPlaylist))
 })
 
-// ✅ Get all playlists of the logged-in user
 const getUserPlaylists = asyncHandler(async (req, res) => {
     const { userId } = req.params
 
